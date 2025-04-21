@@ -78,20 +78,8 @@ mkdir -p src/types
 
 2. After generating your types in `src/types/supabase.ts`, update the Supabase client in `src/lib/supabase.ts`:
 
-This ensures you get full type safety when interacting with your Supabase database.
+This allows you to get full type safety when interacting with your Supabase database.
 
-### 5. Using Supabase in Your Project
-
-Now you can use the typed Supabase client in your components:
-
-```typescript
-import { supabase } from '@/lib/supabase';
-
-// Example query with full type safety
-const { data, error } = await supabase
-  .from('your_table')
-  .select('*');
-```
 
 ## Learn More
 
