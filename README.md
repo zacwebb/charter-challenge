@@ -1,6 +1,6 @@
 # Next.js with Supabase Boilerplate
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app) and integrated with [Supabase](https://supabase.com).
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app) and integrated with [Supabase](https://supabase.com) and [React Flow](https://reactflow.dev/).
 
 ## Getting Started
 
@@ -80,27 +80,41 @@ mkdir -p src/types
 
 This ensures you get full type safety when interacting with your Supabase database.
 
-### 5. Using Supabase in Your Project
+## React Flow Integration
 
-Now you can use the typed Supabase client in your components:
+This project includes [React Flow](https://reactflow.dev/), a library for building interactive node-based UIs, diagrams, and flowcharts.
 
-```typescript
-import { supabase } from '@/lib/supabase';
+### Using the Flow Diagram
 
-// Example query with full type safety
-const { data, error } = await supabase
-  .from('your_table')
-  .select('*');
-```
+The project includes a simple flow diagram component that demonstrates:
+
+- Creating nodes and edges
+- Styling nodes and connections
+- Adding interactive features
+- Connecting nodes dynamically
+
+The diagram is implemented in `src/components/FlowDiagram.tsx` and is displayed on the home page.
+
+### Customizing the Flow Diagram
+
+You can customize the flow diagram by:
+
+1. Modifying the nodes and edges in `src/components/FlowDiagram.tsx`
+2. Changing the styling of nodes and edges
+3. Adding custom node types
+4. Implementing additional interactive features
+
+For more advanced usage, refer to the [React Flow documentation](https://reactflow.dev/docs/introduction/).
 
 ## Learn More
 
-To learn more about Next.js and Supabase, check out these resources:
+To learn more about Next.js, Supabase, and React Flow, check out these resources:
 
 - [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API
 - [Supabase Documentation](https://supabase.com/docs) - learn about Supabase features
 - [Supabase JavaScript Client](https://supabase.com/docs/reference/javascript/introduction) - learn about the Supabase JavaScript client
 - [Supabase TypeScript Support](https://supabase.com/docs/reference/javascript/typescript-support) - learn about Supabase TypeScript integration
+- [React Flow Documentation](https://reactflow.dev/docs/introduction/) - learn about React Flow features and API
 
 ## Deploy on Vercel
 
