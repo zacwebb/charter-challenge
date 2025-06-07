@@ -25,6 +25,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { supabase } from '@/lib/supabase';
+import { Card } from "@/components/ui/card"
 
 // Initial nodes
 const initialNodes: Node[] = [
@@ -126,7 +127,7 @@ export default function FlowDiagram({ systems, onNodeAdd, setActiveSystemId }: F
   }, [systems, setNodes]);
 
   return (
-    <div style={{ width: '100%', height: '600px' }}>
+    <Card style={{ width: '100%', height: '600px' }}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -166,6 +167,6 @@ export default function FlowDiagram({ systems, onNodeAdd, setActiveSystemId }: F
           </div>
         </Panel>
       </ReactFlow>
-    </div>
+    </Card>
   );
 }

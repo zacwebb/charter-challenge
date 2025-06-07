@@ -36,7 +36,7 @@ export default function Home() {
     <div className="container mx-auto p-4">
     <div>{JSON.stringify(systems, null, 2)}</div>
       <h1 className="text-2xl font-bold mb-4">Next.js + Supabase + React Flow</h1>
-      <div className="grid grid-cols-3">
+      <div className="grid grid-cols-3 gap-10">
         <div className="col-span-2">
           <FlowDiagram
             systems={systems}
@@ -45,7 +45,7 @@ export default function Home() {
           />
         </div>
         <div>
-          <SystemDetails system={system} />
+          <SystemDetails system={system} onUpdate={fetchData} />
         </div>
       </div>
     </div>
