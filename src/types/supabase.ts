@@ -9,7 +9,60 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      interfaces_with: {
+        Row: {
+          child_system_id: number
+          connection_type: string | null
+          directional: number | null
+          parent_system_id: number
+        }
+        Insert: {
+          child_system_id: number
+          connection_type?: string | null
+          directional?: number | null
+          parent_system_id: number
+        }
+        Update: {
+          child_system_id?: number
+          connection_type?: string | null
+          directional?: number | null
+          parent_system_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interfaces_with_child_system_id_fkey"
+            columns: ["child_system_id"]
+            isOneToOne: false
+            referencedRelation: "system"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "interfaces_with_parent_system_id_fkey"
+            columns: ["parent_system_id"]
+            isOneToOne: false
+            referencedRelation: "system"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      system: {
+        Row: {
+          category: string | null
+          id: number
+          name: string | null
+        }
+        Insert: {
+          category?: string | null
+          id?: number
+          name?: string | null
+        }
+        Update: {
+          category?: string | null
+          id?: number
+          name?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

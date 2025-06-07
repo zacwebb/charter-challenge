@@ -7,7 +7,7 @@
  */
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   ReactFlow,
   MiniMap,
@@ -24,6 +24,7 @@ import {
   BackgroundVariant,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import { supabase } from '@/lib/supabase';
 
 // Initial nodes
 const initialNodes: Node[] = [
@@ -31,55 +32,23 @@ const initialNodes: Node[] = [
     id: '1',
     type: 'input',
     data: { label: 'Supabase Database' },
-    position: { x: 250, y: 25 },
-    style: {
-      background: '#3ECF8E',
-      color: 'white',
-      border: '1px solid #107969',
-      borderRadius: '8px',
-      padding: '10px',
-      width: 180,
-    },
+    position: { x: 0, y: 0 },
   },
   {
     id: '2',
     data: { label: 'Next.js API Routes' },
-    position: { x: 250, y: 150 },
-    style: {
-      background: '#000000',
-      color: 'white',
-      border: '1px solid #333',
-      borderRadius: '8px',
-      padding: '10px',
-      width: 180,
-    },
+    position: { x: 0, y: 0 },
   },
   {
     id: '3',
     data: { label: 'React Components' },
-    position: { x: 250, y: 275 },
-    style: {
-      background: '#0070f3',
-      color: 'white',
-      border: '1px solid #0050a3',
-      borderRadius: '8px',
-      padding: '10px',
-      width: 180,
-    },
+    position: { x: 0, y: 0 },
   },
   {
     id: '4',
     type: 'output',
     data: { label: 'User Interface' },
-    position: { x: 250, y: 400 },
-    style: {
-      background: '#6b21a8',
-      color: 'white',
-      border: '1px solid #4a1072',
-      borderRadius: '8px',
-      padding: '10px',
-      width: 180,
-    },
+    position: { x: 0, y: 0 },
   },
 ];
 
@@ -89,29 +58,33 @@ const initialEdges: Edge[] = [
     id: 'e1-2',
     source: '1',
     target: '2',
-    animated: true,
-    style: { stroke: '#3ECF8E', strokeWidth: 2 },
   },
   {
     id: 'e2-3',
     source: '2',
     target: '3',
-    animated: true,
-    style: { stroke: '#000000', strokeWidth: 2 },
   },
   {
     id: 'e3-4',
     source: '3',
     target: '4',
-    animated: true,
-    style: { stroke: '#0070f3', strokeWidth: 2 },
   },
 ];
 
-export default function FlowDiagram() {
+
+import { Dispatch, SetStateAction } from 'react';
+import { Tables } from '@/types/supabase';
+
+interface FlowDiagramProps {
+  systems: Tables<'system'>[] | undefined;
+  onNodeAdd: () => void;
+  setActiveSystemId: Dispatch<SetStateAction<number | null>>;
+}
+
+export default function FlowDiagram({ systems, onNodeAdd, setActiveSystemId }: FlowDiagramProps) {
   // Use the hooks to manage nodes and edges
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [nodes, setNodes, onNodesChange] = useNodesState([] as Node[]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([] as Edge[]);
   const [nodeName, setNodeName] = useState('');
 
   // Handle new connections between nodes
@@ -121,28 +94,36 @@ export default function FlowDiagram() {
   );
 
   // Add a new node to the diagram
-  const addNode = useCallback(() => {
+  const addNode = useCallback(async () => {
     if (!nodeName) return;
+    
+    await supabase.from('system').insert({ name: nodeName });
 
-    const newNode: Node = {
-      id: `${nodes.length + 1}`,
-      data: { label: nodeName },
-      position: {
-        x: Math.random() * 500,
-        y: Math.random() * 500,
-      },
-      style: {
-        background: '#ff9900',
-        color: 'white',
-        border: '1px solid #cc7a00',
-        borderRadius: '8px',
-        padding: '10px',
-      },
-    };
-
-    setNodes((nds) => [...nds, newNode]);
     setNodeName('');
-  }, [nodeName, nodes.length, setNodes]);
+    onNodeAdd();
+  }, [nodeName, systems, onNodeAdd]);
+
+  const deleteNodes = async (ids: number[]) => {
+    await supabase
+      .from('system')
+      .delete()
+      .in('id', ids);
+
+      onNodeAdd();
+  };
+
+  useEffect(() => {
+    if (systems) {
+      const formattedNodes: Node[] = systems.map((system) => ({
+        id: system.id.toString(),
+        data: {
+          label: system.name,
+        },
+        position: { x: 0, y: 0 },
+      }));
+      setNodes(formattedNodes);
+    }
+  }, [systems, setNodes]);
 
   return (
     <div style={{ width: '100%', height: '600px' }}>
@@ -154,6 +135,13 @@ export default function FlowDiagram() {
         onConnect={onConnect}
         connectionMode={ConnectionMode.Loose}
         fitView
+        onNodeDoubleClick={(event, node) => {
+          setActiveSystemId(parseInt(node.id));
+        }}
+        onNodesDelete={async (nodes) => {
+          await deleteNodes(nodes.map((node) => parseInt(node.id)))
+        }}
+        
       >
         <Controls />
         <MiniMap />
