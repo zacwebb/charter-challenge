@@ -61,6 +61,8 @@ export default function Home() {
   // Find the active system object
   const system = systems?.find((s) => s.id === activeSystem) || null;
 
+  const childSystems = systems?.filter((s) => s.id !== activeSystem) || [];
+
   return (
     <div className="container mx-auto p-4">
       <div>{JSON.stringify(systems, null, 2)}</div>
@@ -75,7 +77,7 @@ export default function Home() {
           />
         </div>
         <div>
-          <SystemDetails system={system} onUpdate={fetchData} />
+          <SystemDetails system={system} onUpdate={fetchData} childSystems={childSystems} setActiveSystemId={setActiveSystem} />
         </div>
       </div>
     </div>
