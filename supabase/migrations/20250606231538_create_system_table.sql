@@ -1,13 +1,14 @@
 CREATE TABLE system (
   id SERIAL PRIMARY KEY,
   name TEXT UNIQUE,
-  category TEXT
+  category TEXT,
+  parent_system_id INTEGER REFERENCES system (id) NULL
 );
 
 CREATE TABLE interfaces_with (
-  parent_system_id INTEGER REFERENCES system (id),
-  child_system_id INTEGER REFERENCES system (id),
+  first_system_id INTEGER REFERENCES system (id),
+  second_system_id INTEGER REFERENCES system (id),
   connection_type TEXT,
   directional INTEGER,
-  PRIMARY KEY (parent_system_id, child_system_id)
+  PRIMARY KEY (first_system_id, second_system_id)
 );

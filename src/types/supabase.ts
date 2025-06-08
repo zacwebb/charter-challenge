@@ -11,34 +11,34 @@ export type Database = {
     Tables: {
       interfaces_with: {
         Row: {
-          child_system_id: number
           connection_type: string | null
           directional: number | null
-          parent_system_id: number
+          first_system_id: number
+          second_system_id: number
         }
         Insert: {
-          child_system_id: number
           connection_type?: string | null
           directional?: number | null
-          parent_system_id: number
+          first_system_id: number
+          second_system_id: number
         }
         Update: {
-          child_system_id?: number
           connection_type?: string | null
           directional?: number | null
-          parent_system_id?: number
+          first_system_id?: number
+          second_system_id?: number
         }
         Relationships: [
           {
-            foreignKeyName: "interfaces_with_child_system_id_fkey"
-            columns: ["child_system_id"]
+            foreignKeyName: "interfaces_with_first_system_id_fkey"
+            columns: ["first_system_id"]
             isOneToOne: false
             referencedRelation: "system"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "interfaces_with_parent_system_id_fkey"
-            columns: ["parent_system_id"]
+            foreignKeyName: "interfaces_with_second_system_id_fkey"
+            columns: ["second_system_id"]
             isOneToOne: false
             referencedRelation: "system"
             referencedColumns: ["id"]
@@ -50,18 +50,29 @@ export type Database = {
           category: string | null
           id: number
           name: string | null
+          parent_system_id: number | null
         }
         Insert: {
           category?: string | null
           id?: number
           name?: string | null
+          parent_system_id?: number | null
         }
         Update: {
           category?: string | null
           id?: number
           name?: string | null
+          parent_system_id?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "system_parent_system_id_fkey"
+            columns: ["parent_system_id"]
+            isOneToOne: false
+            referencedRelation: "system"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

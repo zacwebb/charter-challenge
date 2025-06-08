@@ -16,6 +16,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { Separator } from "@/components/ui/separator"
 
 interface SystemDetailsProps {
   system: Tables<'system'> | null;
@@ -101,7 +102,10 @@ const SystemDetails = ({ system, onUpdate }: SystemDetailsProps) => {
               />
               <Button onClick={() => updateCategory()} variant="outline">Save</Button>
             </div>
-            
+
+            <Separator className="my-6" />
+
+            <CardTitle>Child Systems</CardTitle>
           </div>
         ) : (
           <p className="text-gray-500">No system selected</p>
