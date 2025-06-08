@@ -8,6 +8,7 @@
 'use client';
 
 import { useCallback, useEffect } from 'react';
+import { Button } from "@/components/ui/button";
 import {
   ReactFlow,
   MiniMap,
@@ -22,7 +23,8 @@ import {
   ConnectionMode,
   BackgroundVariant,
   useReactFlow,
-  useNodesInitialized
+  useNodesInitialized,
+  Panel
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { supabase } from '@/lib/supabase';
@@ -157,7 +159,7 @@ export default function FlowDiagram({ systems, onNodeAdd, setActiveSystemId }: F
   }, [systems, setNodes]);
 
   return (
-    <Card style={{ width: '100%', height: '600px' }}>
+    <Card className='size-full relative py-0'>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -177,6 +179,9 @@ export default function FlowDiagram({ systems, onNodeAdd, setActiveSystemId }: F
         <Controls />
         <MiniMap />
         <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
+        <Panel position='top-right'>
+          <Button variant='outline' onClick={() => setActiveSystemId(null)}>Clear active system</Button>
+        </Panel>
       </ReactFlow>
     </Card>
   );

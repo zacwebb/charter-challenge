@@ -129,7 +129,7 @@ const SystemDetails = ({ system, onUpdate, childSystems, setActiveSystemId }: Sy
     setOpen(true);
   }
 
-  return <Card>
+  return <Card className="h-full">
     <CardHeader>
       <CardTitle>System Details</CardTitle>
       <CardDescription>Currently selected parent system</CardDescription>

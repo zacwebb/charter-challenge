@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import SystemDetails from "@/components/SystemDetails"; // Import the SystemDetails component
 import { Button } from "@/components/ui/button";
 import { ReactFlowProvider } from '@xyflow/react';
+import InterfaceDetails from "@/components/InterfaceDetails";
 
 // Use dynamic import for the FlowDiagram component
 const FlowDiagram = dynamic(
@@ -65,12 +66,11 @@ export default function Home() {
   const childSystems = systems?.filter((s) => s.id !== activeSystem) || [];
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="container h-screen mx-auto py-8 flex flex-col">
       <div>{JSON.stringify(systems, null, 2)}</div>
-      <Button onClick={() => setActiveSystem(null)}>Clear active system</Button>
       <h1 className="text-2xl font-bold mb-4">Next.js + Supabase + React Flow</h1>
-      <div className="grid grid-cols-3 gap-10">
-        <div className="col-span-2">
+      <div className="grid grid-cols-3 grid-rows-2 gap-10 h-full">
+        <div className="col-span-2 row-span-2">
           <ReactFlowProvider>
             <FlowDiagram
               systems={systems}
@@ -79,8 +79,12 @@ export default function Home() {
             />
           </ReactFlowProvider>
         </div>
-        <div>
+        <div className="row-span-1">
           <SystemDetails system={system} onUpdate={fetchData} childSystems={childSystems} setActiveSystemId={setActiveSystem} />
+        </div>
+
+        <div className="row-span-1">
+          <InterfaceDetails />
         </div>
       </div>
     </div>
