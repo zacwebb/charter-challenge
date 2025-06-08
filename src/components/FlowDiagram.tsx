@@ -22,36 +22,16 @@ import {
   ConnectionMode,
   Panel,
   BackgroundVariant,
+  useReactFlow,
+  useNodesInitialized
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { supabase } from '@/lib/supabase';
 import { Card } from "@/components/ui/card"
-
-// Initial nodes
-const initialNodes: Node[] = [
-  {
-    id: '1',
-    type: 'input',
-    data: { label: 'Supabase Database' },
-    position: { x: 0, y: 0 },
-  },
-  {
-    id: '2',
-    data: { label: 'Next.js API Routes' },
-    position: { x: 0, y: 0 },
-  },
-  {
-    id: '3',
-    data: { label: 'React Components' },
-    position: { x: 0, y: 0 },
-  },
-  {
-    id: '4',
-    type: 'output',
-    data: { label: 'User Interface' },
-    position: { x: 0, y: 0 },
-  },
-];
+import { Dispatch, SetStateAction } from 'react';
+import { Tables } from '@/types/supabase';
+import LabeledGroupNode from './LabeledGroupNode';
+import Dagre from '@dagrejs/dagre';
 
 // Initial edges
 const initialEdges: Edge[] = [
@@ -72,9 +52,38 @@ const initialEdges: Edge[] = [
   },
 ];
 
+const getLayoutedElements = (nodes: Node[], edges: Edge[], options: { direction: string }) => {
+  const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
+  g.setGraph({ rankdir: options.direction });
+ 
+  edges.forEach((edge) => g.setEdge(edge.source, edge.target));
+  nodes.forEach((node) =>
+    g.setNode(node.id, {
+      ...node,
+      width: node.measured?.width ?? 0,
+      height: node.measured?.height ?? 0,
+    }),
+  );
+ 
+  Dagre.layout(g);
+ 
+  return {
+    nodes: nodes.map((node) => {
+      const position = g.node(node.id);
+      // We are shifting the dagre node position (anchor=center center) to the top left
+      // so it matches the React Flow node anchor point (top left).
+      const x = position.x - (node.measured?.width ?? 0) / 2;
+      const y = position.y - (node.measured?.height ?? 0) / 2;
+ 
+      return { ...node, position: { x, y } };
+    }),
+    edges,
+  };
+};
 
-import { Dispatch, SetStateAction } from 'react';
-import { Tables } from '@/types/supabase';
+const nodeTypes = {
+  labeledGroupNode: LabeledGroupNode,
+};
 
 interface FlowDiagramProps {
   systems: Tables<'system'>[] | undefined;
@@ -87,6 +96,8 @@ export default function FlowDiagram({ systems, onNodeAdd, setActiveSystemId }: F
   const [nodes, setNodes, onNodesChange] = useNodesState([] as Node[]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([] as Edge[]);
   const [nodeName, setNodeName] = useState('');
+  const { fitView } = useReactFlow();
+  const nodesInitialized = useNodesInitialized({});
 
   // Handle new connections between nodes
   const onConnect = useCallback(
@@ -113,17 +124,48 @@ export default function FlowDiagram({ systems, onNodeAdd, setActiveSystemId }: F
       onNodeAdd();
   };
 
+  // Do auto-layout when nodes are initialized
   useEffect(() => {
-    if (systems) {
-      const formattedNodes: Node[] = systems.map((system) => ({
-        id: system.id.toString(),
-        data: {
-          label: system.name,
-        },
-        position: { x: 0, y: 0 },
-      }));
-      setNodes(formattedNodes);
+    if (nodesInitialized) {
+      const layouted = getLayoutedElements(nodes, edges, { direction: 'TB' });
+ 
+      setNodes([...layouted.nodes]);
+      setEdges([...layouted.edges]);
+ 
+      fitView();
     }
+  }, [nodesInitialized]);
+
+  // Format systems into Node structure
+  useEffect(() => {
+    if (!systems) return;
+
+    const parentIds = systems.map((system) => system.parent_system_id);
+    const allIds = systems.map((system) => system.id);
+
+    const formattedNodes: Node[] = systems.map((system) => {
+      const isGroupNode = system.parent_system_id === null || parentIds.includes(system.id);
+
+      const formattedNode: Node = {
+        id: system.id.toString(),
+        data: { label: system.name },
+        position: { x: 0, y: 0 },
+        ...(isGroupNode ? { type: 'labeledGroupNode' } : {}),
+      };
+
+      if (isGroupNode) {
+        formattedNode.style = system.parent_system_id === null ? { width: 450, height: 300 } : { width: 200, height: 150 };
+      }
+
+      if (system.parent_system_id !== null && allIds.includes(system.parent_system_id)) {
+        formattedNode.parentId = system.parent_system_id.toString();
+        formattedNode.extent = 'parent';
+      }
+
+      return formattedNode;
+    });
+
+    setNodes(formattedNodes);
   }, [systems, setNodes]);
 
   return (
@@ -136,18 +178,18 @@ export default function FlowDiagram({ systems, onNodeAdd, setActiveSystemId }: F
         onConnect={onConnect}
         connectionMode={ConnectionMode.Loose}
         fitView
+        nodeTypes={nodeTypes}
         onNodeDoubleClick={(event, node) => {
           setActiveSystemId(parseInt(node.id));
         }}
         onNodesDelete={async (nodes) => {
           await deleteNodes(nodes.map((node) => parseInt(node.id)))
         }}
-        
       >
         <Controls />
         <MiniMap />
         <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
-        
+
         <Panel position="top-right" className="bg-white p-4 rounded-md shadow-md">
           <h3 className="text-lg font-bold mb-2">Add Node</h3>
           <div className="flex gap-2">

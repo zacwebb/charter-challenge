@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import SystemDetails from "@/components/SystemDetails"; // Import the SystemDetails component
 import { Button } from "@/components/ui/button";
+import { ReactFlowProvider } from '@xyflow/react';
 
 // Use dynamic import for the FlowDiagram component
 const FlowDiagram = dynamic(
@@ -70,11 +71,13 @@ export default function Home() {
       <h1 className="text-2xl font-bold mb-4">Next.js + Supabase + React Flow</h1>
       <div className="grid grid-cols-3 gap-10">
         <div className="col-span-2">
-          <FlowDiagram
-            systems={systems}
-            onNodeAdd={fetchData}
-            setActiveSystemId={setActiveSystem}
-          />
+          <ReactFlowProvider>
+            <FlowDiagram
+              systems={systems}
+              onNodeAdd={fetchData}
+              setActiveSystemId={setActiveSystem}
+            />
+          </ReactFlowProvider>
         </div>
         <div>
           <SystemDetails system={system} onUpdate={fetchData} childSystems={childSystems} setActiveSystemId={setActiveSystem} />
