@@ -13,14 +13,16 @@ import {
   Card,
   CardAction,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { Edit, PlusSquare, Trash2 } from "lucide-react";
+import { CornerDownRight, Edit, PlusSquare, Trash2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator"
+import clsx from 'clsx';
 
 const TrashButton = ({ onClick }: { onClick: () => void }) => {
   return <Button onClick={onClick} size="sm" variant="ghost" className="text-red-800 hover:bg-red-50 hover:text-red-800"><Trash2 /></Button>
@@ -49,7 +51,7 @@ const SystemFormDialog = ({ open, onOpenChange, name, category, onCategoryChange
       <DialogHeader>
         <DialogTitle>{isCreate ? 'Add' : 'Edit'} System</DialogTitle>
         <DialogDescription>
-          { isCreate ? 'Add a new child system to the current system' : 'Edit this system'}
+          { isCreate ? 'Add a new system' : 'Edit this system'}
         </DialogDescription>
       </DialogHeader>
       <div className="grid gap-4 py-4">
@@ -130,37 +132,49 @@ const SystemDetails = ({ system, onUpdate, childSystems, setActiveSystemId }: Sy
   return <Card>
     <CardHeader>
       <CardTitle>System Details</CardTitle>
+      <CardDescription>Currently selected parent system</CardDescription>
+      <CardAction>
       {system ? (
-        <CardAction>
+        <>
           <EditButton onClick={() => openSystemEditDialog(system)} />
           <TrashButton onClick={deleteSystem} />
-        </CardAction>
-      ) : null}
+        </>
+      )
+      : (
+        <Button variant="ghost" size="sm" onClick={() => setOpen(true)}><PlusSquare /></Button>
+      )}
+      </CardAction>
     </CardHeader>
 
     <CardContent>
+      <SystemFormDialog
+        open={open}
+        onOpenChange={() => setOpen(!open)}
+        name={dialogName}
+        category={dialogCategory}
+        onNameChange={(val) => setDialogName(val)}
+        onCategoryChange={(val) => setDialogCategory(val)}
+        onSubmit={() => systemEditId ? editSystem(systemEditId, dialogName, dialogCategory) : createSystem(dialogName, dialogCategory, system?.id ?? null)}
+        mode={systemEditId ? 'edit' : 'create'}
+      />
       {
         system ? (
           <div>
-            <SystemFormDialog
-              open={open}
-              onOpenChange={() => setOpen(!open)}
-              name={dialogName}
-              category={dialogCategory}
-              onNameChange={(val) => setDialogName(val)}
-              onCategoryChange={(val) => setDialogCategory(val)}
-              onSubmit={() => systemEditId ? editSystem(systemEditId, dialogName, dialogCategory) : createSystem(dialogName, dialogCategory, system.id)}
-              mode={systemEditId ? 'edit' : 'create'}
-            />
+            <div>
+              <p className="text-sm font-bold">Name</p>
+              <p className="flex flex-row items-center gap-2">{ system.name } <span className="text-gray-400 text-xs">(#{system.id})</span></p>
+            </div>
 
-            <p>ID: {system.id}</p>
-            <p>Name: {system.name}</p>
-            <p>Category: {system.category}</p>
+            <div className="mt-2">
+              <p className="text-sm font-bold">Category</p>
+              <p>{ system.category ? system.category : (<i>No Category</i>) }</p>
+            </div>
 
             <Separator className="my-6" />
 
             <CardHeader className="px-0">
-              <CardTitle>Child Systems</CardTitle>
+              <CardTitle>Sub-Systems</CardTitle>
+              <CardDescription>Child and grandchild systems of the parent</CardDescription>
               <CardAction>
                 <Button onClick={() => setOpen(true)} variant="ghost" size="sm"><PlusSquare /></Button>
               </CardAction>
@@ -170,7 +184,8 @@ const SystemDetails = ({ system, onUpdate, childSystems, setActiveSystemId }: Sy
                 <li>No child systems</li>
               ) : (
                 childSystems.map((child) => (
-                  <li key={child.id} className="flex flex-row items-center group gap-2 h-8">
+                  <li key={child.id} className={clsx("flex flex-row items-center group gap-2 h-8", { 'pl-4': child.parent_system_id !== system.id })}>
+                    <CornerDownRight className="size-4 text-gray-300" />
                     <div onClick={() => setActiveSystemId(child.id)} className="cursor-pointer">{child.name}</div>
                     <div className="hidden group-hover:block">
                       <EditButton onClick={() => openSystemEditDialog(child)} />

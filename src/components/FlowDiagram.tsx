@@ -7,7 +7,7 @@
  */
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import {
   ReactFlow,
   MiniMap,
@@ -20,7 +20,6 @@ import {
   Edge,
   Connection,
   ConnectionMode,
-  Panel,
   BackgroundVariant,
   useReactFlow,
   useNodesInitialized
@@ -95,7 +94,6 @@ export default function FlowDiagram({ systems, onNodeAdd, setActiveSystemId }: F
   // Use the hooks to manage nodes and edges
   const [nodes, setNodes, onNodesChange] = useNodesState([] as Node[]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([] as Edge[]);
-  const [nodeName, setNodeName] = useState('');
   const { fitView } = useReactFlow();
   const nodesInitialized = useNodesInitialized({});
 
@@ -104,16 +102,6 @@ export default function FlowDiagram({ systems, onNodeAdd, setActiveSystemId }: F
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
     [setEdges]
   );
-
-  // Add a new node to the diagram
-  const addNode = useCallback(async () => {
-    if (!nodeName) return;
-    
-    await supabase.from('system').insert({ name: nodeName });
-
-    setNodeName('');
-    onNodeAdd();
-  }, [nodeName, systems, onNodeAdd]);
 
   const deleteNodes = async (ids: number[]) => {
     await supabase
@@ -189,25 +177,6 @@ export default function FlowDiagram({ systems, onNodeAdd, setActiveSystemId }: F
         <Controls />
         <MiniMap />
         <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
-
-        <Panel position="top-right" className="bg-white p-4 rounded-md shadow-md">
-          <h3 className="text-lg font-bold mb-2">Add Node</h3>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={nodeName}
-              onChange={(e) => setNodeName(e.target.value)}
-              placeholder="Node name"
-              className="px-2 py-1 border rounded"
-            />
-            <button
-              onClick={addNode}
-              className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
-            >
-              Add
-            </button>
-          </div>
-        </Panel>
       </ReactFlow>
     </Card>
   );
