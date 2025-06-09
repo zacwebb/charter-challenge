@@ -17,40 +17,58 @@ const FlowDiagram = dynamic(
 
 export default function Home() {
   const [systems, setSystems] = useState<Tables<'system'>[]>();
+  const [interfaces, setInterfaces] = useState<Tables<'interfaces_with'>[]>();
   const [activeSystem, setActiveSystem] = useState<number | null>(null);
 
   async function fetchData() {
-    const { data, error } = await supabase.from("system").select("*");
+    const { data: systemData, error: systemError } = await supabase.from("system").select("*");
 
-    if (error) {
-      return console.error("Error fetching data:", error);
+    if (systemError) {
+      return console.error("Error fetching system data:", systemError);
     }
+
+    let systemsToSet: Tables<'system'>[] = [];
 
     if (activeSystem) {
       // Fetch the active system and its descendants
-      const activeSystemData = data.find((system) => system.id === activeSystem);
-      let systemsToSet: Tables<'system'>[] = [];
+      const activeSystemData = systemData.find((system) => system.id === activeSystem);
 
       if (activeSystemData) {
-        const descendants = getDescendants(data, activeSystem);
+        const descendants = getDescendants(systemData, activeSystem, 2);
         systemsToSet = [activeSystemData, ...descendants];
       }
 
       setSystems(systemsToSet);
     } else {
       // Fetch only top-level systems (parent_system_id is null)
-      const topLevelSystems = data.filter((system) => system.parent_system_id === null);
-      setSystems(topLevelSystems);
+      systemsToSet = systemData.filter((system) => system.parent_system_id === null);
+      setSystems(systemsToSet);
+    }
+
+    const allSystemIds = systemsToSet.map((sys) => sys.id).toString();
+
+    if (allSystemIds) {
+      // Only fetch interfaces for the currently visible systems
+      const { data: interfaceData, error: interfaceError } = await supabase.from("interfaces_with").select("*").or(`first_system_id.in.(${allSystemIds}), second_system_id.in.(${allSystemIds})`)
+
+      if (interfaceError) {
+        return console.error("Error fetching interface data:", interfaceError);
+      }
+
+      setInterfaces(interfaceData);
     }
   }
 
   // Helper function to get all descendants of a system
-  function getDescendants(systems: Tables<'system'>[], parentId: number): Tables<'system'>[] {
+  function getDescendants(systems: Tables<'system'>[], parentId: number, depth: number = 2): Tables<'system'>[] {
     const descendants: Tables<'system'>[] = [];
+    if (depth === 0) {
+      return descendants;
+    }
     const children = systems.filter((system) => system.parent_system_id === parentId);
 
     children.forEach((child) => {
-      descendants.push(child, ...getDescendants(systems, child.id));
+      descendants.push(child, ...getDescendants(systems, child.id, depth - 1));
     });
 
     return descendants;
@@ -68,12 +86,14 @@ export default function Home() {
   return (
     <div className="container h-screen mx-auto py-8 flex flex-col">
       <div>{JSON.stringify(systems, null, 2)}</div>
+      <div>{JSON.stringify(interfaces, null, 2)}</div>
       <h1 className="text-2xl font-bold mb-4">Next.js + Supabase + React Flow</h1>
-      <div className="grid grid-cols-3 grid-rows-2 gap-10 h-full">
+      <div className="grid grid-cols-3 grid-rows-2 gap-6 h-full">
         <div className="col-span-2 row-span-2">
           <ReactFlowProvider>
             <FlowDiagram
               systems={systems}
+              interfaces={interfaces}
               onNodeAdd={fetchData}
               setActiveSystemId={setActiveSystem}
             />
@@ -84,7 +104,7 @@ export default function Home() {
         </div>
 
         <div className="row-span-1">
-          <InterfaceDetails />
+          <InterfaceDetails onUpdate={fetchData} interfaces={interfaces || []} systems={systems || []} />
         </div>
       </div>
     </div>

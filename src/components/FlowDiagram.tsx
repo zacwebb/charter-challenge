@@ -31,27 +31,7 @@ import { supabase } from '@/lib/supabase';
 import { Card } from "@/components/ui/card"
 import { Dispatch, SetStateAction } from 'react';
 import { Tables } from '@/types/supabase';
-import LabeledGroupNode from './LabeledGroupNode';
 import Dagre from '@dagrejs/dagre';
-
-// Initial edges
-const initialEdges: Edge[] = [
-  {
-    id: 'e1-2',
-    source: '1',
-    target: '2',
-  },
-  {
-    id: 'e2-3',
-    source: '2',
-    target: '3',
-  },
-  {
-    id: 'e3-4',
-    source: '3',
-    target: '4',
-  },
-];
 
 const getLayoutedElements = (nodes: Node[], edges: Edge[], options: { direction: string }) => {
   const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
@@ -82,17 +62,14 @@ const getLayoutedElements = (nodes: Node[], edges: Edge[], options: { direction:
   };
 };
 
-const nodeTypes = {
-  labeledGroupNode: LabeledGroupNode,
-};
-
 interface FlowDiagramProps {
   systems: Tables<'system'>[] | undefined;
+  interfaces: Tables<'interfaces_with'>[] | undefined;
   onNodeAdd: () => void;
   setActiveSystemId: Dispatch<SetStateAction<number | null>>;
 }
 
-export default function FlowDiagram({ systems, onNodeAdd, setActiveSystemId }: FlowDiagramProps) {
+export default function FlowDiagram({ systems, onNodeAdd, setActiveSystemId, interfaces }: FlowDiagramProps) {
   // Use the hooks to manage nodes and edges
   const [nodes, setNodes, onNodesChange] = useNodesState([] as Node[]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([] as Edge[]);
@@ -100,18 +77,24 @@ export default function FlowDiagram({ systems, onNodeAdd, setActiveSystemId }: F
   const nodesInitialized = useNodesInitialized({});
 
   // Handle new connections between nodes
-  const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges]
-  );
+  const onConnect = async (params: Connection) => {
+    await supabase.from('interfaces_with').insert({ first_system_id: parseInt(params.source), second_system_id: parseInt(params.target) })
+    onNodeAdd();
+  }
 
+  // When edge(s) are deleted with backspace
+  const deleteEdges = async (edges: Edge[]) => {
+    for (let edgeIndex in edges) {
+      const edge = edges[edgeIndex];
+      await supabase.from('interfaces_with').delete().eq('first_system_id', parseInt(edge.source)).eq('second_system_id', parseInt(edge.target));
+    }
+    onNodeAdd();
+  };
+
+  // When node(s) are deleted with backspace
   const deleteNodes = async (ids: number[]) => {
-    await supabase
-      .from('system')
-      .delete()
-      .in('id', ids);
-
-      onNodeAdd();
+    await supabase.from('system').delete().in('id', ids);
+    onNodeAdd();
   };
 
   // Do auto-layout when nodes are initialized
@@ -126,7 +109,7 @@ export default function FlowDiagram({ systems, onNodeAdd, setActiveSystemId }: F
     }
   }, [nodesInitialized]);
 
-  // Format systems into Node structure
+  // Format systems and interfaces into Node structure
   useEffect(() => {
     if (!systems) return;
 
@@ -140,11 +123,12 @@ export default function FlowDiagram({ systems, onNodeAdd, setActiveSystemId }: F
         id: system.id.toString(),
         data: { label: system.name },
         position: { x: 0, y: 0 },
-        ...(isGroupNode ? { type: 'labeledGroupNode' } : {}),
       };
 
       if (isGroupNode) {
-        formattedNode.style = system.parent_system_id === null ? { width: 450, height: 300 } : { width: 200, height: 150 };
+        formattedNode.style = system.parent_system_id === null || !allIds.includes(system.parent_system_id)
+          ? { width: 450, height: 300, backgroundColor: '#DCDCDC' }
+          : { width: 200, height: 150, backgroundColor: '#A9A9A9' };
       }
 
       if (system.parent_system_id !== null && allIds.includes(system.parent_system_id)) {
@@ -156,7 +140,24 @@ export default function FlowDiagram({ systems, onNodeAdd, setActiveSystemId }: F
     });
 
     setNodes(formattedNodes);
-  }, [systems, setNodes]);
+
+    if (interfaces) {
+      const formattedInterfaces: Edge[] = interfaces.map((intr) => {
+        return {
+          id: `${intr.first_system_id}-${intr.second_system_id}`,
+          source: intr.first_system_id.toString(),
+          target: intr.second_system_id.toString(),
+          zIndex: 999999,
+          style: {
+            stroke: '#696969',
+            strokeWidth: 2
+          }
+        }
+      })
+
+      setEdges(formattedInterfaces)
+    }
+  }, [systems, interfaces, setNodes]);
 
   return (
     <Card className='size-full relative py-0'>
@@ -168,13 +169,13 @@ export default function FlowDiagram({ systems, onNodeAdd, setActiveSystemId }: F
         onConnect={onConnect}
         connectionMode={ConnectionMode.Loose}
         fitView
-        nodeTypes={nodeTypes}
         onNodeDoubleClick={(event, node) => {
           setActiveSystemId(parseInt(node.id));
         }}
         onNodesDelete={async (nodes) => {
           await deleteNodes(nodes.map((node) => parseInt(node.id)))
         }}
+        onEdgesDelete={deleteEdges}
       >
         <Controls />
         <MiniMap />

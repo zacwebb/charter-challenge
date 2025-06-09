@@ -20,17 +20,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { CornerDownRight, Edit, PlusSquare, Trash2 } from "lucide-react";
+import { CornerDownRight, PlusSquare } from "lucide-react";
 import { Separator } from "@/components/ui/separator"
 import clsx from 'clsx';
-
-const TrashButton = ({ onClick }: { onClick: () => void }) => {
-  return <Button onClick={onClick} size="sm" variant="ghost" className="text-red-800 hover:bg-red-50 hover:text-red-800"><Trash2 /></Button>
-}
-
-const EditButton = ({ onClick }: { onClick: () => void }) => {
-  return <Button size="sm" variant="ghost" onClick={onClick}><Edit /></Button>
-}
+import EditButton from "./EditButton";
+import TrashButton from "./TrashButton";
 
 interface SystemFormDialogProps {
   open: boolean,
@@ -129,7 +123,7 @@ const SystemDetails = ({ system, onUpdate, childSystems, setActiveSystemId }: Sy
     setOpen(true);
   }
 
-  return <Card className="h-full">
+  return <Card className="h-full overflow-scroll">
     <CardHeader>
       <CardTitle>System Details</CardTitle>
       <CardDescription>Currently selected parent system</CardDescription>
@@ -146,7 +140,7 @@ const SystemDetails = ({ system, onUpdate, childSystems, setActiveSystemId }: Sy
       </CardAction>
     </CardHeader>
 
-    <CardContent>
+    <CardContent className="">
       <SystemFormDialog
         open={open}
         onOpenChange={() => setOpen(!open)}
@@ -159,7 +153,7 @@ const SystemDetails = ({ system, onUpdate, childSystems, setActiveSystemId }: Sy
       />
       {
         system ? (
-          <div>
+          <div className="flex flex-col">
             <div>
               <p className="text-sm font-bold">Name</p>
               <p className="flex flex-row items-center gap-2">{ system.name } <span className="text-gray-400 text-xs">(#{system.id})</span></p>
