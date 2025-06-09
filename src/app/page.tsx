@@ -1,86 +1,87 @@
-'use client';
+'use client'
 
-import { supabase } from "@/lib/supabase";
-import { Tables } from "@/types/supabase";
-import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
-import SystemDetails from "@/components/SystemDetails"
-import { ReactFlowProvider } from '@xyflow/react';
-import InterfaceDetails from "@/components/InterfaceDetails";
+import { supabase } from '@/lib/supabase'
+import { Tables } from '@/types/supabase'
+import dynamic from 'next/dynamic'
+import { useEffect, useState } from 'react'
+import SystemDetails from '@/components/SystemDetails'
+import { ReactFlowProvider } from '@xyflow/react'
+import InterfaceDetails from '@/components/InterfaceDetails'
 
 // Use dynamic import for the FlowDiagram component
 const FlowDiagram = dynamic(
   () => import('@/components/FlowDiagram'),
-  { ssr: false }
-);
+  { ssr: false },
+)
 
 export default function Home() {
-  const [systems, setSystems] = useState<Tables<'system'>[]>();
-  const [interfaces, setInterfaces] = useState<Tables<'interfaces_with'>[]>();
-  const [activeSystem, setActiveSystem] = useState<number | null>(null);
+  const [systems, setSystems] = useState<Tables<'system'>[]>()
+  const [interfaces, setInterfaces] = useState<Tables<'interfaces_with'>[]>()
+  const [activeSystem, setActiveSystem] = useState<number | null>(null)
 
   async function fetchData() {
-    const { data: systemData, error: systemError } = await supabase.from("system").select("*");
+    const { data: systemData, error: systemError } = await supabase.from('system').select('*')
 
     if (systemError) {
-      return console.error("Error fetching system data:", systemError);
+      return console.error('Error fetching system data:', systemError)
     }
 
-    let systemsToSet: Tables<'system'>[] = [];
+    let systemsToSet: Tables<'system'>[] = []
 
     if (activeSystem) {
       // Fetch the active system and its descendants
-      const activeSystemData = systemData.find((system) => system.id === activeSystem);
+      const activeSystemData = systemData.find(system => system.id === activeSystem)
 
       if (activeSystemData) {
-        const descendants = getDescendants(systemData, activeSystem, 2);
-        systemsToSet = [activeSystemData, ...descendants];
+        const descendants = getDescendants(systemData, activeSystem, 2)
+        systemsToSet = [activeSystemData, ...descendants]
       }
 
-      setSystems(systemsToSet);
-    } else {
+      setSystems(systemsToSet)
+    }
+    else {
       // Fetch only top-level systems (parent_system_id is null)
-      systemsToSet = systemData.filter((system) => system.parent_system_id === null);
-      setSystems(systemsToSet);
+      systemsToSet = systemData.filter(system => system.parent_system_id === null)
+      setSystems(systemsToSet)
     }
 
-    const allSystemIds = systemsToSet.map((sys) => sys.id).toString();
+    const allSystemIds = systemsToSet.map(sys => sys.id).toString()
 
     if (allSystemIds) {
       // Only fetch interfaces for the currently visible systems
-      const { data: interfaceData, error: interfaceError } = await supabase.from("interfaces_with").select("*").or(`first_system_id.in.(${allSystemIds}), second_system_id.in.(${allSystemIds})`)
+      const { data: interfaceData, error: interfaceError } = await supabase.from('interfaces_with').select('*').or(`first_system_id.in.(${allSystemIds}), second_system_id.in.(${allSystemIds})`)
 
       if (interfaceError) {
-        return console.error("Error fetching interface data:", interfaceError);
+        return console.error('Error fetching interface data:', interfaceError)
       }
 
-      setInterfaces(interfaceData);
+      setInterfaces(interfaceData)
     }
   }
 
   // Helper function to get all descendants of a system
   function getDescendants(systems: Tables<'system'>[], parentId: number, depth: number = 2): Tables<'system'>[] {
-    const descendants: Tables<'system'>[] = [];
+    const descendants: Tables<'system'>[] = []
     if (depth === 0) {
-      return descendants;
+      return descendants
     }
-    const children = systems.filter((system) => system.parent_system_id === parentId);
+    const children = systems.filter(system => system.parent_system_id === parentId)
 
     children.forEach((child) => {
-      descendants.push(child, ...getDescendants(systems, child.id, depth - 1));
-    });
+      descendants.push(child, ...getDescendants(systems, child.id, depth - 1))
+    })
 
-    return descendants;
+    return descendants
   }
-    
+
   useEffect(() => {
-    fetchData();
-  }, [activeSystem]);
+    fetchData()
+  }, [activeSystem])
 
   // Find the active system object
-  const system = systems?.find((s) => s.id === activeSystem) || null;
+  const system = systems?.find(s => s.id === activeSystem) || null
 
-  const childSystems = systems?.filter((s) => s.id !== activeSystem) || [];
+  const childSystems = systems?.filter(s => s.id !== activeSystem) || []
 
   return (
     <div className="container h-screen mx-auto py-8 px-4 flex flex-col items-center">
@@ -105,5 +106,5 @@ export default function Home() {
         </div>
       </div>
     </div>
-  );
+  )
 }
