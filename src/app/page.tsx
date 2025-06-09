@@ -4,8 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { Tables } from "@/types/supabase";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
-import SystemDetails from "@/components/SystemDetails"; // Import the SystemDetails component
-import { Button } from "@/components/ui/button";
+import SystemDetails from "@/components/SystemDetails"
 import { ReactFlowProvider } from '@xyflow/react';
 import InterfaceDetails from "@/components/InterfaceDetails";
 
@@ -84,12 +83,10 @@ export default function Home() {
   const childSystems = systems?.filter((s) => s.id !== activeSystem) || [];
 
   return (
-    <div className="container h-screen mx-auto py-8 flex flex-col">
-      <div>{JSON.stringify(systems, null, 2)}</div>
-      <div>{JSON.stringify(interfaces, null, 2)}</div>
+    <div className="container h-screen mx-auto py-8 px-4 flex flex-col items-center">
       <h1 className="text-2xl font-bold mb-4">Next.js + Supabase + React Flow</h1>
-      <div className="grid grid-cols-3 grid-rows-2 gap-6 h-full">
-        <div className="col-span-2 row-span-2">
+      <div className="grid grid-cols-1 grid-rows-4 lg:grid-cols-3 lg:grid-rows-2 gap-6 size-full min-h-[800px]">
+        <div className="lg:col-span-2 row-span-2">
           <ReactFlowProvider>
             <FlowDiagram
               systems={systems}

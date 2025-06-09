@@ -92,6 +92,7 @@ const InterfaceDetails = ({ interfaces, systems, onUpdate }: InterfaceDetailsPro
             </CardHeader>
 
             <CardContent className="flex flex-col gap-4">
+              { interfaces.length === 0 && <p className="text-gray-500">No system selected</p>}
                 {interfaces.map((iface) => (
                     <div key={`${iface.first_system_id}-${iface.second_system_id}`} className="flex flex-col group">
                       <div className="flex flex-row items-center gap-2 h-8">
